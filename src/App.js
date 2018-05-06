@@ -87,30 +87,27 @@ class App extends Component {
     this.setState({
       imageUrl: this.state.input
     });
-    fetch('http://localhost:8888/image', {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        id: this.state.user.id,
-        entries: this.state.user.entries++
-      })
-    })
-    .then(response => response.json())
-    .then(user => {
-      if (user.id) {
-        this.props.loadUser(user);
-        this.props.entries++;
-      }
-    })
-    .catch(err => console.log(err));
-    console.log('User entries', this.state.user.entries);
-    console.log('State entries', this.state.user.entries);
     // predict the contents of an image by passing in a url
     app.models
       .predict(
           Clarifai.FACE_DETECT_MODEL, 
           this.state.input)
-      .then(response => this.displayFaceBox(this.calculateFaceLocation(response)))
+      .then(response => {
+        if (response) {
+          fetch('http://localhost:8888/image', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              id: this.state.user.id,
+            })
+          })
+          .then(response => response.json())
+          .then(count => {
+            this.setState(Object.assign(this.state.user, { entries: count }))
+          })
+        }
+        this.displayFaceBox(this.calculateFaceLocation(response))
+      })
       .catch(err => console.log(err));
   }
 
